@@ -26,9 +26,9 @@ Define an init-container which checks the DB status
     - "bash"
     - "-c"
     {{- if .Values.airflow.legacyCommands }}
-    - "exec airflow checkdb"
+    - "exec timeout 16s airflow checkdb"
     {{- else }}
-    - "exec airflow db check"
+    - "exec timeout 16s airflow db check"
     {{- end }}
 {{- end }}
 
@@ -84,7 +84,11 @@ Define a container which regularly syncs a git-repo
 EXAMPLE USAGE: {{ include "airflow.container.git_sync" (dict "Release" .Release "Values" .Values "sync_one_time" "true") }}
 */}}
 {{- define "airflow.container.git_sync" }}
+{{- if .sync_one_time }}
+- name: dags-git-clone
+{{- else }}
 - name: dags-git-sync
+{{- end }}
   image: {{ .Values.dags.gitSync.image.repository }}:{{ .Values.dags.gitSync.image.tag }}
   imagePullPolicy: {{ .Values.dags.gitSync.image.pullPolicy }}
   securityContext:
